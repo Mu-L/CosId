@@ -24,26 +24,35 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
  */
 @ConfigurationProperties(prefix = CosId.COSID)
 public class CosIdProperties {
-    public static final String DEFAULT_NAMESPACE = "{" + CosId.COSID + "}";
+    public static final String DEFAULT_NAMESPACE = CosId.COSID;
     private boolean enabled = true;
-
+    
     private String namespace = DEFAULT_NAMESPACE;
-
+    
+    private ProxyProperties proxy = new ProxyProperties();
+    
     public boolean isEnabled() {
         return enabled;
     }
-
+    
     public void setEnabled(boolean enabled) {
         this.enabled = enabled;
     }
-
+    
     public String getNamespace() {
         return namespace;
     }
-
+    
     public void setNamespace(String namespace) {
         this.namespace = namespace;
     }
-
-
+    
+    public ProxyProperties getProxy() {
+        return proxy;
+    }
+    
+    public CosIdProperties setProxy(ProxyProperties proxy) {
+        this.proxy = proxy;
+        return this;
+    }
 }

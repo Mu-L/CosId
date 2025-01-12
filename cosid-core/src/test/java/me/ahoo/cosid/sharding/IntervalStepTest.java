@@ -16,6 +16,7 @@ package me.ahoo.cosid.sharding;
 import static org.junit.jupiter.params.provider.Arguments.arguments;
 
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.EnumSource;
@@ -59,8 +60,8 @@ class IntervalStepTest {
 
     static Stream<Arguments> floorUnitYearArgsProvider() {
         return Stream.of(
-            arguments(LocalDateTime.of(2021, 12, 14, 22, 0), LocalDateTime.of(2021, 1, 1, 0, 0)),
-            arguments(LocalDateTime.of(2022, 11, 14, 22, 1), LocalDateTime.of(2022, 1, 1, 0, 0))
+                arguments(LocalDateTime.of(2021, 12, 14, 22, 0), LocalDateTime.of(2021, 1, 1, 0, 0)),
+                arguments(LocalDateTime.of(2022, 11, 14, 22, 1), LocalDateTime.of(2022, 1, 1, 0, 0))
         );
     }
 
@@ -74,8 +75,8 @@ class IntervalStepTest {
 
     static Stream<Arguments> floorUnitMonthArgsProvider() {
         return Stream.of(
-            arguments(LocalDateTime.of(2021, 12, 14, 22, 0), LocalDateTime.of(2021, 12, 1, 0, 0)),
-            arguments(LocalDateTime.of(2022, 11, 14, 22, 1), LocalDateTime.of(2022, 11, 1, 0, 0))
+                arguments(LocalDateTime.of(2021, 12, 14, 22, 0), LocalDateTime.of(2021, 12, 1, 0, 0)),
+                arguments(LocalDateTime.of(2022, 11, 14, 22, 1), LocalDateTime.of(2022, 11, 1, 0, 0))
         );
     }
 
@@ -89,8 +90,8 @@ class IntervalStepTest {
 
     static Stream<Arguments> floorUnitDayArgsProvider() {
         return Stream.of(
-            arguments(LocalDateTime.of(2021, 12, 14, 22, 0), LocalDateTime.of(2021, 12, 14, 0, 0)),
-            arguments(LocalDateTime.of(2022, 11, 14, 22, 1), LocalDateTime.of(2022, 11, 14, 0, 0))
+                arguments(LocalDateTime.of(2021, 12, 14, 22, 0), LocalDateTime.of(2021, 12, 14, 0, 0)),
+                arguments(LocalDateTime.of(2022, 11, 14, 22, 1), LocalDateTime.of(2022, 11, 14, 0, 0))
         );
     }
 
@@ -105,8 +106,8 @@ class IntervalStepTest {
 
     static Stream<Arguments> floorUnitHourArgsProvider() {
         return Stream.of(
-            arguments(LocalDateTime.of(2021, 12, 14, 22, 0), LocalDateTime.of(2021, 12, 14, 22, 0)),
-            arguments(LocalDateTime.of(2022, 11, 14, 22, 1), LocalDateTime.of(2022, 11, 14, 22, 0))
+                arguments(LocalDateTime.of(2021, 12, 14, 22, 0), LocalDateTime.of(2021, 12, 14, 22, 0)),
+                arguments(LocalDateTime.of(2022, 11, 14, 22, 1), LocalDateTime.of(2022, 11, 14, 22, 0))
         );
     }
 
@@ -118,11 +119,59 @@ class IntervalStepTest {
         Assertions.assertEquals(expected, actual);
     }
 
+
+    static Stream<Arguments> floorUnitMinutesArgsProvider() {
+        return Stream.of(
+                arguments(LocalDateTime.of(2021, 12, 14, 22, 0, 0), LocalDateTime.of(2021, 12, 14, 22, 0)),
+                arguments(LocalDateTime.of(2022, 11, 14, 22, 0, 1), LocalDateTime.of(2022, 11, 14, 22, 0))
+        );
+    }
+
+    @ParameterizedTest
+    @MethodSource("floorUnitMinutesArgsProvider")
+    void floorUnitMinutes(LocalDateTime dateTime, LocalDateTime expected) {
+        IntervalStep step = IntervalStep.of(ChronoUnit.MINUTES);
+        LocalDateTime actual = step.floorUnit(dateTime);
+        Assertions.assertEquals(expected, actual);
+    }
+
+
+    static Stream<Arguments> floorUnitSecondArgsProvider() {
+        return Stream.of(
+                arguments(LocalDateTime.of(2021, 12, 14, 22, 0, 0, 0), LocalDateTime.of(2021, 12, 14, 22, 0, 0)),
+                arguments(LocalDateTime.of(2022, 11, 14, 22, 0, 0, 1), LocalDateTime.of(2022, 11, 14, 22, 0, 0))
+        );
+    }
+
+    @ParameterizedTest
+    @MethodSource("floorUnitSecondArgsProvider")
+    void floorUnitSeconds(LocalDateTime dateTime, LocalDateTime expected) {
+        IntervalStep step = IntervalStep.of(ChronoUnit.MINUTES);
+        LocalDateTime actual = step.floorUnit(dateTime);
+        Assertions.assertEquals(expected, actual);
+    }
+
+    static Stream<Arguments> floorUnitDefaultArgsProvider() {
+        return Stream.of(
+                arguments(LocalDateTime.of(2021, 12, 14, 22, 0, 0, 0), LocalDateTime.of(2021, 12, 14, 22, 0, 0)),
+                arguments(LocalDateTime.of(2022, 11, 14, 22, 0, 0, 1), LocalDateTime.of(2022, 11, 14, 22, 0, 0))
+        );
+    }
+
+    @ParameterizedTest
+    @MethodSource("floorUnitDefaultArgsProvider")
+    void floorUnitDefaults(LocalDateTime dateTime, LocalDateTime expected) {
+        IntervalStep step = IntervalStep.of(ChronoUnit.NANOS);
+        Assertions.assertThrows(IllegalStateException.class, () -> {
+            step.floorUnit(dateTime);
+        });
+    }
+
     static Stream<Arguments> offsetUnitArgsProvider() {
         return Stream.of(
-            arguments(LocalDateTime.of(2021, 1, 28, 22, 1), 0),
-            arguments(LocalDateTime.of(2021, 12, 14, 22, 0), 11),
-            arguments(LocalDateTime.of(2022, 11, 14, 22, 1), 22)
+                arguments(LocalDateTime.of(2021, 1, 28, 22, 1), 0),
+                arguments(LocalDateTime.of(2021, 12, 14, 22, 0), 11),
+                arguments(LocalDateTime.of(2022, 11, 14, 22, 1), 22)
         );
     }
 
@@ -136,9 +185,9 @@ class IntervalStepTest {
 
     static Stream<Arguments> offsetUnitAmountTwoArgsProvider() {
         return Stream.of(
-            arguments(LocalDateTime.of(2021, 1, 28, 22, 1), 0),
-            arguments(LocalDateTime.of(2021, 12, 14, 22, 0), 5),
-            arguments(LocalDateTime.of(2022, 11, 14, 22, 1), 11)
+                arguments(LocalDateTime.of(2021, 1, 28, 22, 1), 0),
+                arguments(LocalDateTime.of(2021, 12, 14, 22, 0), 5),
+                arguments(LocalDateTime.of(2022, 11, 14, 22, 1), 11)
         );
     }
 
@@ -149,13 +198,12 @@ class IntervalStepTest {
         int actual = step.offsetUnit(START_DATE_TIME, dateTime);
         Assertions.assertEquals(expected, actual);
     }
-
-
+    
     static Stream<Arguments> offsetUnitDayArgsProvider() {
         return Stream.of(
-            arguments(LocalDateTime.of(2021, 1, 28, 22, 1), 27),
-            arguments(LocalDateTime.of(2021, 12, 14, 22, 0), 347),
-            arguments(LocalDateTime.of(2022, 11, 14, 22, 1), 682)
+                arguments(LocalDateTime.of(2021, 1, 28, 22, 1), 27),
+                arguments(LocalDateTime.of(2021, 12, 14, 22, 0), 347),
+                arguments(LocalDateTime.of(2022, 11, 14, 22, 1), 682)
         );
     }
 
@@ -163,6 +211,21 @@ class IntervalStepTest {
     @MethodSource("offsetUnitDayArgsProvider")
     void offsetUnitDay(LocalDateTime dateTime, int expected) {
         IntervalStep step = IntervalStep.of(ChronoUnit.DAYS);
+        int actual = step.offsetUnit(START_DATE_TIME, dateTime);
+        Assertions.assertEquals(expected, actual);
+    }
+    
+    static Stream<Arguments> offsetUnitHourArgsProvider() {
+        return Stream.of(
+            arguments(LocalDateTime.of(2021, 1, 1, 22, 1), 22),
+            arguments(LocalDateTime.of(2021, 1, 2, 1, 0), 25)
+        );
+    }
+    
+    @ParameterizedTest
+    @MethodSource("offsetUnitHourArgsProvider")
+    void offsetUnitHour(LocalDateTime dateTime, int expected) {
+        IntervalStep step = IntervalStep.of(ChronoUnit.HOURS);
         int actual = step.offsetUnit(START_DATE_TIME, dateTime);
         Assertions.assertEquals(expected, actual);
     }

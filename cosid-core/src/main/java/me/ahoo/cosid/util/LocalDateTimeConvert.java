@@ -13,6 +13,8 @@
 
 package me.ahoo.cosid.util;
 
+import javax.annotation.Nonnull;
+import javax.annotation.concurrent.ThreadSafe;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -27,20 +29,31 @@ import java.util.Date;
  *
  * @author ahoo wang
  */
+@ThreadSafe
 public final class LocalDateTimeConvert {
-
+    private LocalDateTimeConvert() {
+    }
+    
+    @Nonnull
     public static LocalDateTime fromDate(Date date, ZoneId zoneId) {
-        return LocalDateTime.ofInstant(date.toInstant(), zoneId);
+        return fromTimestamp(date.getTime(), zoneId);
     }
-
-    public static LocalDateTime fromTimestamp(Long timestamp, ZoneId zoneId) {
-        return LocalDateTime.ofInstant(Instant.ofEpochMilli(timestamp), zoneId);
+    
+    @Nonnull
+    public static LocalDateTime fromTimestamp(long timestamp, ZoneId zoneId) {
+        return fromInstant(Instant.ofEpochMilli(timestamp), zoneId);
     }
-
-    public static LocalDateTime fromTimestampSecond(Long timestamp, ZoneId zoneId) {
-        return LocalDateTime.ofInstant(Instant.ofEpochSecond(timestamp), zoneId);
+    
+    @Nonnull
+    public static LocalDateTime fromTimestampSecond(long timestamp, ZoneId zoneId) {
+        return fromInstant(Instant.ofEpochSecond(timestamp), zoneId);
     }
-
+    
+    @Nonnull
+    public static LocalDateTime fromInstant(Instant instant, ZoneId zoneId) {
+        return LocalDateTime.ofInstant(instant, zoneId);
+    }
+    
     /**
      * convert {@link String} to {@link LocalDateTime}.
      *
@@ -48,6 +61,7 @@ public final class LocalDateTimeConvert {
      * @param dateTimeFormatter date time formatter
      * @return LocalDateTime from string
      */
+    @Nonnull
     public static LocalDateTime fromString(String dateTime, DateTimeFormatter dateTimeFormatter) {
         TemporalAccessor temporalAccessor = dateTimeFormatter.parseBest(dateTime, LocalDateTime::from, LocalDate::from);
         if (temporalAccessor instanceof LocalDateTime) {

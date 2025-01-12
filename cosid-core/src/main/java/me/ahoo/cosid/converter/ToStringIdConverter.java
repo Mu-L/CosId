@@ -13,7 +13,15 @@
 
 package me.ahoo.cosid.converter;
 
+import static me.ahoo.cosid.converter.RadixIdConverter.PAD_CHAR;
+
 import me.ahoo.cosid.IdConverter;
+import me.ahoo.cosid.stat.Stat;
+import me.ahoo.cosid.stat.converter.ToStringConverterStat;
+
+import com.google.common.base.Strings;
+
+import javax.annotation.Nonnull;
 
 /**
  * ToString ID Converter.
@@ -22,15 +30,32 @@ import me.ahoo.cosid.IdConverter;
  */
 public class ToStringIdConverter implements IdConverter {
 
-    public static final IdConverter INSTANCE = new ToStringIdConverter();
+    public static final ToStringIdConverter INSTANCE = new ToStringIdConverter(false, 0);
+    private final boolean padStart;
+    private final int charSize;
 
+    public ToStringIdConverter(boolean padStart, int charSize) {
+        this.padStart = padStart;
+        this.charSize = charSize;
+    }
+
+    @Nonnull
     @Override
     public String asString(long id) {
-        return String.valueOf(id);
+        String idStr = String.valueOf(id);
+        if (!padStart) {
+            return idStr;
+        }
+        return Strings.padStart(idStr, charSize, PAD_CHAR);
     }
 
     @Override
-    public long asLong(String idString) {
+    public long asLong(@Nonnull String idString) {
         return Long.parseLong(idString);
+    }
+
+    @Override
+    public Stat stat() {
+        return new ToStringConverterStat(getClass().getSimpleName(), padStart, charSize);
     }
 }

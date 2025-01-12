@@ -17,19 +17,18 @@ import me.ahoo.cosid.accessor.registry.CosIdAccessorRegistry;
 import me.ahoo.cosid.mybatis.CosIdPlugin;
 import me.ahoo.cosid.spring.boot.starter.ConditionalOnCosIdEnabled;
 
-import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
+import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
 
 /**
  * CosId Mybatis AutoConfiguration.
  *
  * @author ahoo wang
  */
-@Configuration(proxyBeanMethods = false)
+@AutoConfiguration
 @ConditionalOnCosIdEnabled
-@ConditionalOnClass(CosIdPlugin.class)
+@ConditionalOnCosIdMybatisEnabled
 public class CosIdMybatisAutoConfiguration {
 
     @Bean

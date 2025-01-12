@@ -21,5 +21,9 @@
 ## SpringRedisMachineIdDistributor
 
 <p align="center" >
-  <img :src="$withBase('/assets/design/RedisMachineIdDistributor.png')" alt="SegmentId"/>
+  <img :src="$withBase('/assets/design/MachineIdDistributor.png')" alt="SegmentId"/>
+</p>
+
+<p align="center">
+  <img :src="$withBase('/assets/design/Machine-Id-Safe-Guard.png')" alt="Machine Id Safe Guard"/>
 </p>

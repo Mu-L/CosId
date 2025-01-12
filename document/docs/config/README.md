@@ -5,7 +5,7 @@
 | 名称        | 数据类型      | 说明                   | 默认值       |
 |-----------|-----------|----------------------|-----------|
 | enabled   | `boolean` | 是否启用 CosId           | `true`    |
-| namespace | `String`  | 命名空间，用于隔离不同应用间的分布式ID | `{cosid}` |
+| namespace | `String`  | 命名空间，用于隔离不同应用间的分布式ID | `cosid` |
 
 **YAML 配置样例**
 
@@ -20,7 +20,7 @@ cosid:
 
 | 名称     | 数据类型                          | 说明                                             | 默认值                         |
 |--------|-------------------------------|------------------------------------------------|-----------------------------|
-| type   | `IdConverterDefinition.Type`  | 转换器类型：`TO_STRING`、`SNOWFLAKE_FRIENDLY`、`RADIX` | `Type.TO_STRING`            |
+| type   | `IdConverterDefinition.Type`  | 转换器类型：`TO_STRING`、`SNOWFLAKE_FRIENDLY`、`RADIX` | `Type.RADIX`                |
 | prefix | `String`                      | 前缀                                             | `""`                        |
 | radix  | `IdConverterDefinition.Radix` | `Radix62IdConverter` 转换器配置                     | `TimestampUnit.MILLISECOND` |
 

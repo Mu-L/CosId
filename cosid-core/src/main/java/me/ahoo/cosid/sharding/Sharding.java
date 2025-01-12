@@ -13,20 +13,19 @@
 
 package me.ahoo.cosid.sharding;
 
-import com.google.common.collect.Range;
-
+import javax.annotation.Nonnull;
+import javax.annotation.concurrent.ThreadSafe;
 import java.util.Collection;
 
 /**
  * Sharding algorithm interface.
  *
+ * <p><img src="../doc-files/Sharding.png" alt="Sharding"></p>
+ *
  * @author ahoo wang
  */
-public interface Sharding<T extends Comparable<?>> {
-
-    String sharding(T shardingValue);
-
-    Collection<String> sharding(Range<T> shardingValue);
-
+@ThreadSafe
+public interface Sharding<T extends Comparable<?>> extends PreciseSharding<T>, RangeSharding<T> {
+    @Nonnull
     Collection<String> getEffectiveNodes();
 }

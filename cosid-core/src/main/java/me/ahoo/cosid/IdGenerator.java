@@ -13,8 +13,12 @@
 
 package me.ahoo.cosid;
 
-import me.ahoo.cosid.converter.ToStringIdConverter;
+import me.ahoo.cosid.converter.Radix62IdConverter;
+import me.ahoo.cosid.stat.Stat;
+import me.ahoo.cosid.stat.Statistical;
+import me.ahoo.cosid.stat.generator.IdGeneratorStat;
 
+import javax.annotation.Nonnull;
 import javax.annotation.concurrent.ThreadSafe;
 
 /**
@@ -23,30 +27,33 @@ import javax.annotation.concurrent.ThreadSafe;
  * @author ahoo wang
  */
 @ThreadSafe
-public interface IdGenerator {
-
+public interface IdGenerator extends StringIdGenerator, Statistical {
+    
     /**
-     * ID converter, used to convert {@link long} type ID to {@link String}.
+     * ID converter, used to convert {@code long} type ID to {@link String}.
      *
      * @return ID converter
      */
+    @Nonnull
     default IdConverter idConverter() {
-        return ToStringIdConverter.INSTANCE;
+        return Radix62IdConverter.PAD_START;
     }
-
+    
     /**
      * Generate distributed ID.
      *
      * @return generated distributed ID
      */
     long generate();
-
-    /**
-     * Generate distributed ID as String.
-     *
-     * @return generated distributed ID as String
-     */
+    
+    @Nonnull
+    @Override
     default String generateAsString() {
         return idConverter().asString(generate());
+    }
+    
+    @Override
+    default IdGeneratorStat stat() {
+        return IdGeneratorStat.simple(getClass().getSimpleName(), idConverter().stat());
     }
 }

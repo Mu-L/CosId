@@ -13,19 +13,33 @@
 
 package me.ahoo.cosid.spring.redis;
 
-import org.junit.jupiter.api.Test;
+import me.ahoo.cosid.machine.ClockBackwardsSynchronizer;
+import me.ahoo.cosid.machine.MachineIdDistributor;
+import me.ahoo.cosid.machine.MachineStateStorage;
+import me.ahoo.cosid.test.machine.distributor.MachineIdDistributorSpec;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.springframework.data.redis.connection.RedisStandaloneConfiguration;
+import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactory;
+import org.springframework.data.redis.core.StringRedisTemplate;
 
 /**
  * @author ahoo wang
  */
-class SpringRedisMachineIdDistributorTest {
-
-    @Test
-    void distribute0() {
-
+class SpringRedisMachineIdDistributorTest extends MachineIdDistributorSpec {
+    StringRedisTemplate stringRedisTemplate;
+    
+    @BeforeEach
+    void setup() {
+        RedisStandaloneConfiguration redisStandaloneConfiguration = new RedisStandaloneConfiguration();
+        LettuceConnectionFactory lettuceConnectionFactory = new LettuceConnectionFactory(redisStandaloneConfiguration);
+        lettuceConnectionFactory.afterPropertiesSet();
+        stringRedisTemplate = new StringRedisTemplate(lettuceConnectionFactory);
     }
-
-    @Test
-    void revert0() {
+    
+    @Override
+    protected MachineIdDistributor getDistributor() {
+        return new SpringRedisMachineIdDistributor(stringRedisTemplate, MachineStateStorage.IN_MEMORY, ClockBackwardsSynchronizer.DEFAULT);
     }
+    
 }

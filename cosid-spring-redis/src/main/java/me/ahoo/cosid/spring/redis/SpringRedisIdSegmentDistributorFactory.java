@@ -19,26 +19,31 @@ import me.ahoo.cosid.segment.IdSegmentDistributorFactory;
 
 import org.springframework.data.redis.core.StringRedisTemplate;
 
+import javax.annotation.Nonnull;
+
 /**
  * Spring Redis IdSegmentDistributor Factory.
  *
  * @author ahoo wang
  */
 public class SpringRedisIdSegmentDistributorFactory implements IdSegmentDistributorFactory {
-
+    
     private final StringRedisTemplate redisTemplate;
-
+    
     public SpringRedisIdSegmentDistributorFactory(StringRedisTemplate redisTemplate) {
         this.redisTemplate = redisTemplate;
     }
-
+    
+    @Nonnull
     @Override
     public IdSegmentDistributor create(IdSegmentDistributorDefinition definition) {
-        return new SpringRedisIdSegmentDistributor(
+        SpringRedisIdSegmentDistributor springRedisIdSegmentDistributor = new SpringRedisIdSegmentDistributor(
             definition.getNamespace(),
             definition.getName(),
             definition.getOffset(),
             definition.getStep(),
             redisTemplate);
+        springRedisIdSegmentDistributor.ensureOffset();
+        return springRedisIdSegmentDistributor;
     }
 }

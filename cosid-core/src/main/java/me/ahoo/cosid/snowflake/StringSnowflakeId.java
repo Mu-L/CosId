@@ -14,14 +14,15 @@
 package me.ahoo.cosid.snowflake;
 
 import me.ahoo.cosid.IdConverter;
-import me.ahoo.cosid.StringIdGenerator;
+import me.ahoo.cosid.StringIdGeneratorDecorator;
+import me.ahoo.cosid.stat.generator.IdGeneratorStat;
 
 /**
  * String SnowflakeId.
  *
  * @author ahoo wang
  */
-public class StringSnowflakeId extends StringIdGenerator implements SnowflakeId {
+public class StringSnowflakeId extends StringIdGeneratorDecorator implements SnowflakeId {
     private final SnowflakeId snowflakeId;
 
     public StringSnowflakeId(SnowflakeId actual, IdConverter idConverter) {
@@ -55,8 +56,8 @@ public class StringSnowflakeId extends StringIdGenerator implements SnowflakeId 
     }
 
     @Override
-    public long getMaxMachine() {
-        return snowflakeId.getMaxMachine();
+    public int getMaxMachineId() {
+        return snowflakeId.getMaxMachineId();
     }
 
     @Override
@@ -70,7 +71,13 @@ public class StringSnowflakeId extends StringIdGenerator implements SnowflakeId 
     }
 
     @Override
-    public long getMachineId() {
+    public int getMachineId() {
         return snowflakeId.getMachineId();
+    }
+
+
+    @Override
+    public IdGeneratorStat stat() {
+        return super.stat();
     }
 }
