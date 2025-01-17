@@ -12,10 +12,6 @@
  */
 
 java {
-    registerFeature("redisSupport") {
-        usingSourceSet(sourceSets[SourceSet.MAIN_SOURCE_SET_NAME])
-        capability(group.toString(), "redis-support", version.toString())
-    }
     registerFeature("springRedisSupport") {
         usingSourceSet(sourceSets[SourceSet.MAIN_SOURCE_SET_NAME])
         capability(group.toString(), "spring-redis-support", version.toString())
@@ -24,33 +20,79 @@ java {
         usingSourceSet(sourceSets[SourceSet.MAIN_SOURCE_SET_NAME])
         capability(group.toString(), "jdbc-support", version.toString())
     }
+    registerFeature("mongoSupport") {
+        usingSourceSet(sourceSets[SourceSet.MAIN_SOURCE_SET_NAME])
+        capability(group.toString(), "mongo-support", version.toString())
+    }
     registerFeature("zookeeperSupport") {
         usingSourceSet(sourceSets[SourceSet.MAIN_SOURCE_SET_NAME])
         capability(group.toString(), "zookeeper-support", version.toString())
+    }
+    registerFeature("proxySupport") {
+        usingSourceSet(sourceSets[SourceSet.MAIN_SOURCE_SET_NAME])
+        capability(group.toString(), "proxy-support", version.toString())
     }
     registerFeature("mybatisSupport") {
         usingSourceSet(sourceSets[SourceSet.MAIN_SOURCE_SET_NAME])
         capability(group.toString(), "mybatis-support", version.toString())
     }
+    registerFeature("dataJdbcSupport") {
+        usingSourceSet(sourceSets[SourceSet.MAIN_SOURCE_SET_NAME])
+        capability(group.toString(), "data-jdbc-support", version.toString())
+    }
+    registerFeature("activitiSupport") {
+        usingSourceSet(sourceSets[SourceSet.MAIN_SOURCE_SET_NAME])
+        capability(group.toString(), "activiti-support", version.toString())
+    }
+    registerFeature("flowableSupport") {
+        usingSourceSet(sourceSets[SourceSet.MAIN_SOURCE_SET_NAME])
+        capability(group.toString(), "flowable-support", version.toString())
+    }
+    registerFeature("cloudSupport") {
+        usingSourceSet(sourceSets[SourceSet.MAIN_SOURCE_SET_NAME])
+        capability(group.toString(), "cloud-support", version.toString())
+    }
+    registerFeature("actuatorSupport") {
+        usingSourceSet(sourceSets[SourceSet.MAIN_SOURCE_SET_NAME])
+        capability(group.toString(), "actuator-support", version.toString())
+    }
 }
 
 dependencies {
     api(project(":cosid-core"))
+    testImplementation(project(mapOf("path" to ":cosid-mongo")))
+    testImplementation(project(mapOf("path" to ":cosid-mongo")))
 
     "springRedisSupportImplementation"(project(":cosid-spring-redis"))
     "springRedisSupportImplementation"("org.springframework.boot:spring-boot-starter-data-redis")
 
-    "redisSupportImplementation"(project(":cosid-redis"))
-    "redisSupportImplementation"("me.ahoo.cosky:cosky-spring-cloud-core")
-
     "jdbcSupportImplementation"(project(":cosid-jdbc"))
-
     "zookeeperSupportImplementation"(project(":cosid-zookeeper"))
 
+    "proxySupportImplementation"(project(":cosid-proxy"))
+    "mongoSupportImplementation"(project(":cosid-mongo"))
+    "activitiSupportImplementation"(project(":cosid-activiti"))
+    "activitiSupportImplementation"(libs.activiti.spring.boot.starter)
+    "flowableSupportImplementation"(project(":cosid-flowable"))
+    "flowableSupportImplementation"(libs.flowable.spring)
+    "flowableSupportImplementation"(libs.flowable.spring.boot.autoconfigure)
     "mybatisSupportImplementation"(project(":cosid-mybatis"))
+    "dataJdbcSupportImplementation"(project(":cosid-spring-data-jdbc"))
     api("org.springframework.boot:spring-boot-starter")
-    api("org.springframework.cloud:spring-cloud-commons")
-    annotationProcessor("org.springframework.boot:spring-boot-configuration-processor:${rootProject.ext.get("springBootVersion")}")
-    annotationProcessor("org.springframework.boot:spring-boot-autoconfigure-processor:${rootProject.ext.get("springBootVersion")}")
+    "cloudSupportImplementation"("org.springframework.cloud:spring-cloud-commons")
+    "actuatorSupportImplementation"("org.springframework.boot:spring-boot-starter-actuator")
+    compileOnly("org.mongodb:mongodb-driver-sync")
+    compileOnly("org.mongodb:mongodb-driver-reactivestreams")
+    annotationProcessor("org.springframework.boot:spring-boot-configuration-processor")
+    annotationProcessor("org.springframework.boot:spring-boot-autoconfigure-processor")
+    testImplementation(project(":cosid-test"))
+    testImplementation("org.mongodb:mongodb-driver-sync")
+    testImplementation("org.mongodb:mongodb-driver-reactivestreams")
+    testImplementation("org.springframework.boot:spring-boot-starter-test")
+    testImplementation("com.mysql:mysql-connector-j")
+    testImplementation("org.springframework.boot:spring-boot-starter-jdbc")
+    testImplementation("org.apache.curator:curator-test")
+    testImplementation("org.testcontainers:testcontainers")
+    testImplementation("org.testcontainers:junit-jupiter")
+    testImplementation("org.testcontainers:mongodb")
 }
-

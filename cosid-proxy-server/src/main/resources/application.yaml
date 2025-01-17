@@ -1,0 +1,40 @@
+management:
+  endpoints:
+    web:
+      exposure:
+        include:
+          - health
+          - cosid
+          - cosidGenerator
+          - cosidStringGenerator
+springdoc:
+  show-actuator: true
+server:
+  port: 8688
+spring:
+  application:
+    name: ${service.name:cosid-proxy}
+  autoconfigure:
+    exclude:
+#     - org.springframework.boot.autoconfigure.data.redis.RedisAutoConfiguration
+     - org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration
+#  datasource:
+#    url: jdbc:mysql://localhost:3306/cosid_db
+#    username: root
+#    password: root
+cosid:
+  namespace: ${spring.application.name}
+  machine:
+    enabled: true
+    distributor:
+      type: redis
+  snowflake:
+    enabled: true
+  segment:
+    enabled: true
+    distributor:
+      type: redis
+logging:
+  level:
+    me.ahoo.cosid: debug
+

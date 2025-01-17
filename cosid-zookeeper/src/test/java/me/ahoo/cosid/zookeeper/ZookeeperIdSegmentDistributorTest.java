@@ -14,80 +14,64 @@
 package me.ahoo.cosid.zookeeper;
 
 import me.ahoo.cosid.segment.IdSegmentDistributor;
-import me.ahoo.cosid.util.MockIdGenerator;
+import me.ahoo.cosid.segment.IdSegmentDistributorFactory;
+import me.ahoo.cosid.test.segment.distributor.IdSegmentDistributorSpec;
 
+import lombok.SneakyThrows;
 import org.apache.curator.RetryPolicy;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.CuratorFrameworkFactory;
 import org.apache.curator.retry.ExponentialBackoffRetry;
+import org.apache.curator.test.TestingServer;
 import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
 
-import java.util.Arrays;
 import java.util.Objects;
-import java.util.concurrent.CompletableFuture;
 
 /**
  * @author ahoo wang
  */
-class ZookeeperIdSegmentDistributorTest {
+class ZookeeperIdSegmentDistributorTest extends IdSegmentDistributorSpec {
     CuratorFramework curatorFramework;
     RetryPolicy retryPolicy;
-    ZookeeperIdSegmentDistributor zookeeperIdSegmentDistributor;
-
+    ZookeeperIdSegmentDistributorFactory distributorFactory;
+    TestingServer testingServer;
+    
+    @SneakyThrows
     @BeforeEach
-    void init() {
+    void setup() {
+        testingServer = new TestingServer();
+        testingServer.start();
         retryPolicy = new ExponentialBackoffRetry(1000, 3, 3000);
-        curatorFramework = CuratorFrameworkFactory.newClient("localhost:2181", retryPolicy);
+        curatorFramework = CuratorFrameworkFactory.newClient(testingServer.getConnectString(), retryPolicy);
         curatorFramework.start();
-        zookeeperIdSegmentDistributor =
-            new ZookeeperIdSegmentDistributor("ZookeeperIdSegmentDistributorTest", MockIdGenerator.INSTANCE.generateAsString(), IdSegmentDistributor.DEFAULT_OFFSET, IdSegmentDistributor.DEFAULT_STEP,
-                curatorFramework, retryPolicy);
+        
+        distributorFactory = new ZookeeperIdSegmentDistributorFactory(curatorFramework, retryPolicy);
     }
-
-    @Test
-    void nextMaxId() {
-        long nextMaxId = zookeeperIdSegmentDistributor.nextMaxId(100);
-        Assertions.assertEquals(100, nextMaxId);
-        nextMaxId = zookeeperIdSegmentDistributor.nextMaxId(100);
-        Assertions.assertEquals(200, nextMaxId);
-    }
-
-    @Test
-    void nextMaxIdOffset() {
-        ZookeeperIdSegmentDistributor distributorOffset100 =
-            new ZookeeperIdSegmentDistributor("ZookeeperIdSegmentDistributorTest", MockIdGenerator.INSTANCE.generateAsString(), 100, IdSegmentDistributor.DEFAULT_STEP, curatorFramework, retryPolicy);
-        long nextMaxId = distributorOffset100.nextMaxId(100);
-        Assertions.assertEquals(200, nextMaxId);
-        nextMaxId = distributorOffset100.nextMaxId(100);
-        Assertions.assertEquals(300, nextMaxId);
-    }
-
-    @Test
-    void nextMaxIdConcurrent() {
-        int times = 100;
-        CompletableFuture<Long>[] results = new CompletableFuture[100];
-        ZookeeperIdSegmentDistributor distributor =
-            new ZookeeperIdSegmentDistributor("ZookeeperIdSegmentDistributorTest", MockIdGenerator.INSTANCE.generateAsString(), 0, IdSegmentDistributor.DEFAULT_STEP, curatorFramework, retryPolicy);
-
-        for (int i = 0; i < times; i++) {
-            results[i] = CompletableFuture.supplyAsync(() -> distributor.nextMaxId(1));
-        }
-
-        CompletableFuture.allOf(results).join();
-
-        Long[] machineIds = Arrays.stream(results).map(CompletableFuture::join).sorted().toArray(Long[]::new);
-        for (int i = 0; i < machineIds.length; i++) {
-            Assertions.assertEquals(i + 1, machineIds[i]);
-        }
-    }
-
+    
+    @SneakyThrows
     @AfterEach
     void destroy() {
         if (Objects.nonNull(curatorFramework)) {
             curatorFramework.close();
         }
+        if (Objects.nonNull(testingServer)) {
+            testingServer.stop();
+        }
+    }
+    
+    @Override
+    protected IdSegmentDistributorFactory getFactory() {
+        return distributorFactory;
+    }
+    
+    @Override
+    protected <T extends IdSegmentDistributor> void setMaxIdBack(T distributor, long maxId) {
+    
+    }
+    
+    @Override
+    public void nextMaxIdWhenBack() {
+        //TODO
     }
 }

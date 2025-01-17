@@ -26,7 +26,9 @@ import me.ahoo.cosid.spring.boot.starter.IdConverterDefinition;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.NestedConfigurationProperty;
 
+import javax.annotation.Nonnull;
 import java.time.Duration;
+import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -48,13 +50,14 @@ public class SegmentIdProperties {
     private long ttl = TIME_TO_LIVE_FOREVER;
     private Distributor distributor;
     private Chain chain;
-    private IdDefinition share;
+    private ShardIdDefinition share;
     private Map<String, IdDefinition> provider;
 
     public SegmentIdProperties() {
-        share = new IdDefinition();
+        share = new ShardIdDefinition();
         distributor = new Distributor();
         chain = new Chain();
+        provider = new HashMap<>();
     }
 
     public boolean isEnabled() {
@@ -97,14 +100,15 @@ public class SegmentIdProperties {
         this.chain = chain;
     }
 
-    public IdDefinition getShare() {
+    public ShardIdDefinition getShare() {
         return share;
     }
 
-    public void setShare(IdDefinition share) {
+    public void setShare(ShardIdDefinition share) {
         this.share = share;
     }
 
+    @Nonnull
     public Map<String, IdDefinition> getProvider() {
         return provider;
     }
@@ -114,7 +118,7 @@ public class SegmentIdProperties {
     }
 
     public enum Mode {
-        DEFAULT,
+        SEGMENT,
         CHAIN
     }
 
@@ -179,10 +183,12 @@ public class SegmentIdProperties {
         private Type type = Type.REDIS;
         private Redis redis;
         private Jdbc jdbc;
+        private Mongo mongo;
 
         public Distributor() {
             this.redis = new Redis();
             this.jdbc = new Jdbc();
+            this.mongo = new Mongo();
         }
 
         public Type getType() {
@@ -207,6 +213,14 @@ public class SegmentIdProperties {
 
         public void setJdbc(Jdbc jdbc) {
             this.jdbc = jdbc;
+        }
+
+        public Mongo getMongo() {
+            return mongo;
+        }
+
+        public void setMongo(Mongo mongo) {
+            this.mongo = mongo;
         }
 
         public static class Redis {
@@ -281,15 +295,29 @@ public class SegmentIdProperties {
 
         }
 
+        public static class Mongo {
+            private String database = "cosid_db";
+
+            public String getDatabase() {
+                return database;
+            }
+
+            public void setDatabase(String database) {
+                this.database = database;
+            }
+        }
+
         public enum Type {
             REDIS,
             JDBC,
-            ZOOKEEPER
+            MONGO,
+            ZOOKEEPER,
+            PROXY
         }
     }
 
     public static class IdDefinition {
-
+        private String namespace;
         private Mode mode;
         private long offset = IdSegmentDistributor.DEFAULT_OFFSET;
         private long step = IdSegmentDistributor.DEFAULT_STEP;
@@ -300,7 +328,16 @@ public class SegmentIdProperties {
         private Long ttl;
         private Chain chain;
         @NestedConfigurationProperty
-        private IdConverterDefinition converter;
+        private IdConverterDefinition converter = new IdConverterDefinition();
+        private Group group = new Group();
+
+        public String getNamespace() {
+            return namespace;
+        }
+
+        public void setNamespace(String namespace) {
+            this.namespace = namespace;
+        }
 
         public Mode getMode() {
             return mode;
@@ -350,5 +387,53 @@ public class SegmentIdProperties {
             this.converter = converter;
         }
 
+        public Group getGroup() {
+            return group;
+        }
+
+        public void setGroup(Group group) {
+            this.group = group;
+        }
+
+        public static class Group {
+            private GroupBy by = GroupBy.NEVER;
+            private String pattern;
+
+            public GroupBy getBy() {
+                return by;
+            }
+
+            public Group setBy(GroupBy by) {
+                this.by = by;
+                return this;
+            }
+
+            public String getPattern() {
+                return pattern;
+            }
+
+            public void setPattern(String pattern) {
+                this.pattern = pattern;
+            }
+        }
+
+        public enum GroupBy {
+            YEAR,
+            YEAR_MONTH,
+            YEAR_MONTH_DAY,
+            NEVER
+        }
+    }
+
+    public static class ShardIdDefinition extends IdDefinition {
+        private boolean enabled = true;
+
+        public boolean isEnabled() {
+            return enabled;
+        }
+
+        public void setEnabled(boolean enabled) {
+            this.enabled = enabled;
+        }
     }
 }

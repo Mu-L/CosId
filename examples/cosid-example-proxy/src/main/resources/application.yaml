@@ -1,0 +1,25 @@
+server:
+  port: 8600
+spring:
+  application:
+    name: ${service.name:cosid-example-proxy}
+cosid:
+  namespace: ${spring.application.name}
+  machine:
+    enabled: true
+    distributor:
+      type: proxy
+    guarder:
+      enabled: true
+  snowflake:
+    enabled: true
+
+#  segment:
+#    enabled: true
+#    mode: chain
+#    distributor:
+#      type: proxy
+
+logging:
+  level:
+    me.ahoo.cosid: debug

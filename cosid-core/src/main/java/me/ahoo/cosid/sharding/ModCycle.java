@@ -17,10 +17,13 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.BoundType;
 import com.google.common.collect.Range;
 
+import javax.annotation.Nonnull;
 import java.util.Collection;
 
 /**
  * ModCycle.
+ *
+ * <p><img src="../doc-files/CosIdModShardingAlgorithm.png" alt="CosIdModShardingAlgorithm"></p>
  *
  * @author ahoo wang
  */
@@ -51,12 +54,14 @@ public class ModCycle<T extends Number & Comparable<T>> implements Sharding<T> {
         return divisor;
     }
 
+    @Nonnull
     @Override
     public String sharding(T shardingValue) {
         int nodeIdx = (int) (shardingValue.longValue() % divisor);
         return effectiveNodes.get(nodeIdx);
     }
 
+    @Nonnull
     @Override
     public Collection<String> sharding(Range<T> shardingValue) {
 
@@ -100,6 +105,7 @@ public class ModCycle<T extends Number & Comparable<T>> implements Sharding<T> {
         return nodes;
     }
 
+    @Nonnull
     @Override
     public Collection<String> getEffectiveNodes() {
         return effectiveNodes;

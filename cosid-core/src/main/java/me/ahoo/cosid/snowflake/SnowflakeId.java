@@ -14,9 +14,13 @@
 package me.ahoo.cosid.snowflake;
 
 import me.ahoo.cosid.IdGenerator;
+import me.ahoo.cosid.stat.generator.IdGeneratorStat;
+import me.ahoo.cosid.stat.generator.SnowflakeIdStat;
 
 /**
  * Snowflake algorithm ID generator.
+ *
+ * <p><img src="../doc-files/SnowflakeId.png" alt="SnowflakeId"></p>
  *
  * @author ahoo wang
  */
@@ -43,11 +47,30 @@ public interface SnowflakeId extends IdGenerator {
 
     long getMaxTimestamp();
 
-    long getMaxMachine();
+    int getMaxMachineId();
 
     long getMaxSequence();
 
     long getLastTimestamp();
 
-    long getMachineId();
+    int getMachineId();
+
+    static long defaultSequenceResetThreshold(int sequenceBit) {
+        return ~(-1L << (sequenceBit - 1));
+    }
+
+    @Override
+    default IdGeneratorStat stat() {
+        return new SnowflakeIdStat(
+                getClass().getSimpleName(),
+                getEpoch(),
+                getTimestampBit(),
+                getMachineBit(),
+                getSequenceBit(),
+                isSafeJavascript(),
+                getMachineId(),
+                getLastTimestamp(),
+                idConverter().stat()
+        );
+    }
 }

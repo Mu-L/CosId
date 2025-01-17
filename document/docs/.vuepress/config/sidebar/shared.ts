@@ -13,8 +13,8 @@
 
 import {SidebarConfigArray} from 'vuepress/config';
 
-export function getGuideSidebar(groupA, groupB): SidebarConfigArray {
-    const sidebar: SidebarConfigArray = [
+export function getGuideSidebar(groupA: string, groupB: string): SidebarConfigArray {
+    return [
         {
             title: groupA,
             collapsable: false,
@@ -33,7 +33,9 @@ export function getGuideSidebar(groupA, groupB): SidebarConfigArray {
                 'cosid-zookeeper',
                 'cosid-jackson',
                 'cosid-mybatis',
-                'cosid-shardingsphere'
+                'cosid-shardingsphere',
+                'cosid-axon',
+                'cosid-flowable'
             ]
         },
         {
@@ -41,6 +43,7 @@ export function getGuideSidebar(groupA, groupB): SidebarConfigArray {
             collapsable: false,
             children: [
                 'api/',
+                'api/cosid-generator',
                 'api/id-converter',
                 'api/provider',
                 'api/snowflake',
@@ -60,21 +63,21 @@ export function getGuideSidebar(groupA, groupB): SidebarConfigArray {
             title: '性能评测',
             collapsable: false,
             children: [
-                "perf-test"
+                "perf-test",
+                "Performance-CosId-Leaf"
             ]
         }
     ]
-
-    return sidebar
 }
 
-export function getConfigSidebar(groupA): SidebarConfigArray {
-    const sidebar: SidebarConfigArray = [
+export function getConfigSidebar(groupA: string): SidebarConfigArray {
+    return [
         {
             title: groupA,
             collapsable: false,
             children: [
                 '',
+                'machine',
                 'snowflake',
                 'segment',
                 'zookeeper',
@@ -82,5 +85,4 @@ export function getConfigSidebar(groupA): SidebarConfigArray {
             ]
         }
     ]
-    return sidebar
 }

@@ -16,12 +16,14 @@ package me.ahoo.cosid.provider;
 import me.ahoo.cosid.CosIdException;
 import me.ahoo.cosid.IdConverter;
 import me.ahoo.cosid.IdGenerator;
+import me.ahoo.cosid.IdGeneratorDecorator;
 import me.ahoo.cosid.segment.SegmentId;
 import me.ahoo.cosid.snowflake.SnowflakeFriendlyId;
 import me.ahoo.cosid.snowflake.SnowflakeId;
 
 import com.google.common.base.Strings;
 
+import javax.annotation.Nonnull;
 import java.util.Optional;
 
 /**
@@ -29,66 +31,84 @@ import java.util.Optional;
  *
  * @author ahoo wang
  */
-public final class LazyIdGenerator implements IdGenerator {
-
+public final class LazyIdGenerator implements IdGeneratorDecorator {
+    
     private final String generatorName;
-
-    private IdGenerator lazyIdGen;
-
+    
+    private volatile IdGenerator lazyIdGen;
+    
+    private final IdGeneratorProvider idGeneratorProvider;
+    
     public LazyIdGenerator(String generatorName) {
-        this.generatorName = generatorName;
+        this(generatorName, DefaultIdGeneratorProvider.INSTANCE);
     }
-
+    
+    public LazyIdGenerator(String generatorName, IdGeneratorProvider idGeneratorProvider) {
+        this.generatorName = generatorName;
+        this.idGeneratorProvider = idGeneratorProvider;
+    }
+    
     public String getGeneratorName() {
         return generatorName;
     }
-
+    
     public IdGenerator tryGet(boolean required) {
-        if (lazyIdGen != null) {
+        if (null != lazyIdGen) {
             return lazyIdGen;
         }
-        String idName = getGeneratorName();
-        Optional<IdGenerator> idGeneratorOp = DefaultIdGeneratorProvider.INSTANCE.get(idName);
+        String generatorName = getGeneratorName();
+        Optional<IdGenerator> idGeneratorOp = idGeneratorProvider.get(generatorName);
         if (idGeneratorOp.isPresent()) {
             lazyIdGen = idGeneratorOp.get();
             return lazyIdGen;
         } else if (required) {
-            throw new NotFoundIdGeneratorException(idName);
+            throw new NotFoundIdGeneratorException(generatorName);
         }
         return null;
     }
-
+    
     public SnowflakeId asSnowflakeId(boolean required) {
         IdGenerator idGenerator = tryGet(required);
+        if (null == idGenerator) {
+            return null;
+        }
         if (idGenerator instanceof SnowflakeId) {
             return (SnowflakeId) idGenerator;
         }
         throw new CosIdException(Strings.lenientFormat("IdGenerator:[%s] is not instanceof SnowflakeId!", generatorName));
     }
-
+    
     public SnowflakeFriendlyId asFriendlyId(boolean required) {
         IdGenerator idGenerator = tryGet(required);
+        if (null == idGenerator) {
+            return null;
+        }
         if (idGenerator instanceof SnowflakeFriendlyId) {
             return (SnowflakeFriendlyId) idGenerator;
         }
         throw new CosIdException(Strings.lenientFormat("IdGenerator:[%s] is not instanceof SnowflakeFriendlyId!", generatorName));
     }
-
+    
     public SegmentId asSegmentId(boolean required) {
         IdGenerator idGenerator = tryGet(required);
+        if (null == idGenerator) {
+            return null;
+        }
         if (idGenerator instanceof SegmentId) {
             return (SegmentId) idGenerator;
         }
         throw new CosIdException(Strings.lenientFormat("IdGenerator:[%s] is not instanceof SegmentId!", generatorName));
     }
-
+    
+    @Nonnull
     @Override
-    public long generate() {
-        return tryGet(true).generate();
+    public IdGenerator getActual() {
+        return tryGet(true);
     }
-
+    
+    @Nonnull
     @Override
     public IdConverter idConverter() {
-        return tryGet(true).idConverter();
+        return getActual().idConverter();
     }
 }

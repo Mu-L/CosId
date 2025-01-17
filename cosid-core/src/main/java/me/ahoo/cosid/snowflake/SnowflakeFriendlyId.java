@@ -13,26 +13,32 @@
 
 package me.ahoo.cosid.snowflake;
 
+import javax.annotation.Nonnull;
+
 /**
  * Snowflake FriendlyId.
  *
  * @author ahoo wang
  */
 public interface SnowflakeFriendlyId extends SnowflakeId {
-
+    
+    @Nonnull
     SnowflakeIdStateParser getParser();
-
+    
+    @Nonnull
     default SnowflakeIdState friendlyId(long id) {
         return getParser().parse(id);
     }
-
+    
+    @Nonnull
     default SnowflakeIdState friendlyId() {
         long id = generate();
         return friendlyId(id);
     }
-
+    
+    @Nonnull
     default SnowflakeIdState ofFriendlyId(String friendlyId) {
         return getParser().parse(friendlyId);
     }
-
+    
 }

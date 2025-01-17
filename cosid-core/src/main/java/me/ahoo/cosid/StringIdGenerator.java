@@ -13,29 +13,21 @@
 
 package me.ahoo.cosid;
 
+import javax.annotation.Nonnull;
+import javax.annotation.concurrent.ThreadSafe;
+
 /**
- * used to enhance the generated string ID.
+ * String type ID generator.
  *
  * @author ahoo wang
  */
-public class StringIdGenerator implements IdGenerator {
-
-    protected final IdGenerator actual;
-    protected final IdConverter idConverter;
-
-    public StringIdGenerator(IdGenerator actual, IdConverter idConverter) {
-        this.actual = actual;
-        this.idConverter = idConverter;
-    }
-
-    @Override
-    public IdConverter idConverter() {
-        return idConverter;
-    }
-
-    @Override
-    public long generate() {
-        return actual.generate();
-    }
-
+@ThreadSafe
+public interface StringIdGenerator {
+    /**
+     * Generate string type distributed ID.
+     *
+     * @return string type distributed ID
+     */
+    @Nonnull
+    String generateAsString();
 }

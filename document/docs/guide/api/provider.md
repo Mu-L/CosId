@@ -1,8 +1,10 @@
 # IdGeneratorProvider
 
-TODO
-
 > `IdGenerator` 容器
+
+<p align="center">
+  <img :src="$withBase('/assets/design/IdGeneratorProvider-impl-class.png')" alt="IdGeneratorProvider implementation class diagram"/>
+</p>
 
 ## DefaultIdGeneratorProvider
 
@@ -11,3 +13,4 @@ TODO
 ## LazyIdGenerator
 
 > 懒加载 `IdGenerator`
+

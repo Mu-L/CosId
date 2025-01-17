@@ -1,3 +1,6 @@
+import org.gradle.api.tasks.testing.logging.TestExceptionFormat
+import org.gradle.testretry.TestRetryPlugin
+
 /*
  * Copyright [2021-present] [ahoo wang <ahoowang@qq.com> (https://github.com/Ahoo-Wang)].
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,43 +15,42 @@
  */
 
 plugins {
-    id("io.github.gradle-nexus.publish-plugin")
+    alias(libs.plugins.test.retry)
+    alias(libs.plugins.publish)
+    alias(libs.plugins.jmh)
+    alias(libs.plugins.spotbugs)
+    `java-library`
+    jacoco
 }
 
+val dependenciesProject = project(":cosid-dependencies")
 val bomProjects = setOf(
     project(":cosid-bom"),
-    project(":cosid-dependencies")
+    dependenciesProject,
 )
 
 val coreProjects = setOf(
     project(":cosid-core")
 )
 val serverProjects = setOf(
-    project(":cosid-example")
+    project(":cosid-example-proxy"),
+    project(":cosid-example-redis"),
+    project(":cosid-example-redis-cosid"),
+    project(":cosid-example-zookeeper"),
+    project(":cosid-proxy-server")
 )
 
-val publishProjects = subprojects - serverProjects
+val testProjects = setOf(project(":cosid-test"), project(":cosid-mod-test"))
+val codeCoverageReportProject = project(":code-coverage-report")
+val publishProjects = subprojects - serverProjects - codeCoverageReportProject
 val libraryProjects = publishProjects - bomProjects
-
-ext {
-    set("lombokVersion", "1.18.20")
-    set("guavaVersion", "30.0-jre")
-    set("springBootVersion", "2.4.13")
-    set("springCloudVersion", "2020.0.5")
-    set("springfoxVersion", "3.0.0")
-    set("jmhVersion", "1.33")
-    set("junitPioneerVersion", "1.4.2")
-    set("mybatisVersion", "3.5.7")
-    set("mybatisBootVersion", "2.1.4")
-    set("coskyVersion", "1.3.10")
-    set("shardingsphereVersion", "5.0.0")
-    set("libraryProjects", libraryProjects)
-}
-
+val isInCI = null != System.getenv("CI")
+ext.set("libraryProjects", libraryProjects)
 
 allprojects {
     repositories {
         mavenLocal()
+        maven { url = uri("https://repo.spring.io/milestone") }
         mavenCentral()
     }
 }
@@ -69,32 +71,32 @@ configure(libraryProjects) {
     configure<com.github.spotbugs.snom.SpotBugsExtension> {
         excludeFilter.set(file("${rootDir}/config/spotbugs/exclude.xml"))
     }
+    apply<JacocoPlugin>()
     apply<JavaLibraryPlugin>()
     configure<JavaPluginExtension> {
         toolchain {
-            languageVersion.set(JavaLanguageVersion.of(8))
+            languageVersion.set(JavaLanguageVersion.of(17))
         }
         withJavadocJar()
         withSourcesJar()
     }
     apply<me.champeau.jmh.JMHPlugin>()
     configure<me.champeau.jmh.JmhParameters> {
-        val DELIMITER = ',';
-        val JMH_INCLUDES_KEY = "jmhIncludes"
-        val JMH_EXCLUDES_KEY = "jmhExcludes"
-        val JMH_THREADS_KEY = "jmhThreads"
-        val JMH_MODE_KEY = "jmhMode"
+        val delimiter = ',';
+        val jmhIncludesKey = "jmhIncludes"
+        val jmhExcludesKey = "jmhExcludes"
+        val jmhThreadsKey = "jmhThreads"
+        val jmhModeKey = "jmhMode"
 
-        if (project.hasProperty(JMH_INCLUDES_KEY)) {
-            val jmhIncludes = project.properties[JMH_INCLUDES_KEY].toString().split(DELIMITER)
+        if (project.hasProperty(jmhIncludesKey)) {
+            val jmhIncludes = project.properties[jmhIncludesKey].toString().split(delimiter)
             includes.set(jmhIncludes)
         }
-        if (project.hasProperty(JMH_EXCLUDES_KEY)) {
-            val jmhExcludes = project.properties[JMH_EXCLUDES_KEY].toString().split(DELIMITER)
+        if (project.hasProperty(jmhExcludesKey)) {
+            val jmhExcludes = project.properties[jmhExcludesKey].toString().split(delimiter)
             excludes.set(jmhExcludes)
         }
 
-        jmhVersion.set(rootProject.ext.get("jmhVersion").toString())
         warmupIterations.set(1)
         iterations.set(1)
         resultFormat.set("json")
@@ -102,38 +104,64 @@ configure(libraryProjects) {
         var jmhMode = listOf(
             "thrpt"
         )
-        if (project.hasProperty(JMH_MODE_KEY)) {
-            jmhMode = project.properties[JMH_MODE_KEY].toString().split(DELIMITER)
+        if (project.hasProperty(jmhModeKey)) {
+            jmhMode = project.properties[jmhModeKey].toString().split(delimiter)
         }
         benchmarkMode.set(jmhMode)
         var jmhThreads = 1
-        if (project.hasProperty(JMH_THREADS_KEY)) {
-            jmhThreads = Integer.valueOf(project.properties[JMH_THREADS_KEY].toString())
+        if (project.hasProperty(jmhThreadsKey)) {
+            jmhThreads = Integer.valueOf(project.properties[jmhThreadsKey].toString())
         }
         threads.set(jmhThreads)
         fork.set(1)
+        jvmArgs.set(listOf("-Dlogback.configurationFile=${rootProject.rootDir}/config/logback-jmh.xml"))
     }
-
+    apply<TestRetryPlugin>()
     tasks.withType<Test> {
         useJUnitPlatform()
+        testLogging {
+            exceptionFormat = TestExceptionFormat.FULL
+        }
+        jvmArgs =
+            listOf(
+                // fix logging missing code for JacocoPlugin
+                "-Dlogback.configurationFile=${rootProject.rootDir}/config/logback.xml",
+                "--add-opens=java.base/java.util=ALL-UNNAMED",
+                "--add-opens=java.base/java.lang=ALL-UNNAMED"
+            )
+        retry {
+            if (isInCI) {
+                maxRetries = 2
+                maxFailures = 20
+            }
+            failOnPassedAfterRetry = true
+        }
+    }
+
+    // SpringBoot 3.2.0: fix Failed to extract parameter names for CosIdEndpoint
+    tasks.withType<JavaCompile> {
+        options.compilerArgs.addAll(listOf("-parameters"))
     }
 
     dependencies {
-        val depLombok = "org.projectlombok:lombok:${rootProject.ext.get("lombokVersion")}"
-        add("api", platform(project(":cosid-dependencies")))
-        add("compileOnly", depLombok)
-        add("annotationProcessor", depLombok)
-        add("testCompileOnly", depLombok)
-        add("testAnnotationProcessor", depLombok)
-        add("implementation", "com.google.guava:guava")
-        add("implementation", "org.slf4j:slf4j-api")
-        add("testImplementation", "ch.qos.logback:logback-classic")
-        add("testImplementation", "org.junit.jupiter:junit-jupiter-api")
-        add("testImplementation", "org.junit.jupiter:junit-jupiter-params")
-        add("testImplementation", "org.junit-pioneer:junit-pioneer")
-        add("testRuntimeOnly", "org.junit.jupiter:junit-jupiter-engine")
-        add("jmh", "org.openjdk.jmh:jmh-core:${rootProject.ext.get("jmhVersion")}")
-        add("jmh", "org.openjdk.jmh:jmh-generator-annprocess:${rootProject.ext.get("jmhVersion")}")
+        api(platform(dependenciesProject))
+        annotationProcessor(platform(dependenciesProject))
+        testAnnotationProcessor(platform(dependenciesProject))
+        jmh(platform(dependenciesProject))
+        compileOnly("org.projectlombok:lombok")
+        annotationProcessor("org.projectlombok:lombok")
+        testCompileOnly("org.projectlombok:lombok")
+        testAnnotationProcessor("org.projectlombok:lombok")
+        implementation("com.google.guava:guava")
+        implementation("org.slf4j:slf4j-api")
+        testImplementation("ch.qos.logback:logback-classic")
+        testImplementation("org.junit.jupiter:junit-jupiter-api")
+        testImplementation("org.junit.jupiter:junit-jupiter-params")
+        testImplementation("org.junit-pioneer:junit-pioneer")
+        testImplementation("org.hamcrest:hamcrest")
+        testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine")
+        jmh("org.openjdk.jmh:jmh-core")
+        jmh("org.openjdk.jmh:jmh-generator-annprocess")
     }
 }
 
@@ -151,8 +179,16 @@ configure(publishProjects) {
                 name = "GitHubPackages"
                 url = uri("https://maven.pkg.github.com/Ahoo-Wang/CosId")
                 credentials {
-                    username = project.findProperty("gitHubPackagesUserName") as? String
-                    password = project.findProperty("gitHubPackagesToken") as? String?
+                    username = System.getenv("GITHUB_ACTOR")
+                    password = System.getenv("GITHUB_TOKEN")
+                }
+            }
+            maven {
+                name = "LinYiPackages"
+                url = uri(project.properties["linyiPackageReleaseUrl"].toString())
+                credentials {
+                    username = project.properties["linyiPackageUsername"]?.toString()
+                    password = project.properties["linyiPackagePwd"]?.toString()
                 }
             }
         }
@@ -193,7 +229,15 @@ configure(publishProjects) {
             }
         }
     }
+
     configure<SigningExtension> {
+        if (isInCI) {
+            val signingKeyId = System.getenv("SIGNING_KEYID")
+            val signingKey = System.getenv("SIGNING_SECRETKEY")
+            val signingPassword = System.getenv("SIGNING_PASSWORD")
+            useInMemoryPgpKeys(signingKeyId, signingKey, signingPassword)
+        }
+
         if (isBom) {
             sign(extensions.getByType(PublishingExtension::class).publications.get("mavenBom"))
         } else {
@@ -203,11 +247,12 @@ configure(publishProjects) {
 }
 
 nexusPublishing {
-    repositories {
-        sonatype()
+    this.repositories {
+        sonatype {
+            username.set(System.getenv("MAVEN_USERNAME"))
+            password.set(System.getenv("MAVEN_PASSWORD"))
+        }
     }
 }
 
 fun getPropertyOf(name: String) = project.properties[name]?.toString()
-
-

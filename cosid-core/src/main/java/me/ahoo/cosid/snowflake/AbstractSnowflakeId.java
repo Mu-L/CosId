@@ -32,16 +32,24 @@ public abstract class AbstractSnowflakeId implements SnowflakeId {
 
     protected final long maxTimestamp;
     protected final long maxSequence;
-    protected final long maxMachine;
+    protected final int maxMachineId;
 
     protected final long machineLeft;
     protected final long timestampLeft;
-
+    /**
+     * WARN:machineLeft greater than 30 will cause overflow, so machineId should be long when calculating.
+     */
     protected final long machineId;
+    private final long sequenceResetThreshold;
     protected long sequence = 0L;
     protected long lastTimestamp = -1L;
 
-    public AbstractSnowflakeId(long epoch, int timestampBit, int machineBit, int sequenceBit, long machineId) {
+    public AbstractSnowflakeId(long epoch,
+                               int timestampBit,
+                               int machineBit,
+                               int sequenceBit,
+                               int machineId,
+                               long sequenceResetThreshold) {
         if ((timestampBit + machineBit + sequenceBit) > TOTAL_BIT) {
             throw new IllegalArgumentException("total bit can't be greater than TOTAL_BIT[63] .");
         }
@@ -51,13 +59,14 @@ public abstract class AbstractSnowflakeId implements SnowflakeId {
         this.sequenceBit = sequenceBit;
         this.maxTimestamp = ~(-1L << timestampBit);
         this.maxSequence = ~(-1L << sequenceBit);
-        this.maxMachine = ~(-1L << machineBit);
+        this.maxMachineId = ~(-1 << machineBit);
         this.machineLeft = sequenceBit;
         this.timestampLeft = this.machineLeft + machineBit;
-        if (machineId > this.maxMachine || machineId < 0) {
-            throw new IllegalArgumentException(Strings.lenientFormat("machineId can't be greater than maxMachine[%s] or less than 0 .", maxMachine));
+        if (machineId > this.maxMachineId || machineId < 0) {
+            throw new IllegalArgumentException(Strings.lenientFormat("machineId[%s] can't be greater than maxMachineId[%s] or less than 0 .", machineId, maxMachineId));
         }
         this.machineId = machineId;
+        this.sequenceResetThreshold = sequenceResetThreshold;
     }
 
     protected long nextTime() {
@@ -82,23 +91,28 @@ public abstract class AbstractSnowflakeId implements SnowflakeId {
             throw new ClockBackwardsException(lastTimestamp, currentTimestamp);
         }
 
-        if (currentTimestamp == lastTimestamp) {
-            sequence = (sequence + 1) & maxSequence;
-            if (sequence == 0L) {
-                currentTimestamp = nextTime();
-            }
-        } else {
+        //region Reset sequence based on sequence reset threshold,Optimize the problem of uneven sharding.
+
+        if (currentTimestamp > lastTimestamp
+                && sequence >= sequenceResetThreshold) {
             sequence = 0L;
         }
 
+        sequence = (sequence + 1) & maxSequence;
+
+        if (sequence == 0L) {
+            currentTimestamp = nextTime();
+        }
+
+        //endregion
         lastTimestamp = currentTimestamp;
         long diffTimestamp = (currentTimestamp - epoch);
         if (diffTimestamp > maxTimestamp) {
             throw new TimestampOverflowException(epoch, diffTimestamp, maxTimestamp);
         }
         return diffTimestamp << timestampLeft
-            | machineId << machineLeft
-            | sequence;
+                | machineId << machineLeft
+                | sequence;
     }
 
     @Override
@@ -127,8 +141,8 @@ public abstract class AbstractSnowflakeId implements SnowflakeId {
     }
 
     @Override
-    public long getMaxMachine() {
-        return maxMachine;
+    public int getMaxMachineId() {
+        return maxMachineId;
     }
 
     @Override
@@ -142,8 +156,8 @@ public abstract class AbstractSnowflakeId implements SnowflakeId {
     }
 
     @Override
-    public long getMachineId() {
-        return machineId;
+    public int getMachineId() {
+        return (int) machineId;
     }
 
 }

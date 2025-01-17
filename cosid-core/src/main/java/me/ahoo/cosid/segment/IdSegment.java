@@ -13,23 +13,25 @@
 
 package me.ahoo.cosid.segment;
 
+import me.ahoo.cosid.segment.grouped.Grouped;
 import me.ahoo.cosid.util.Clock;
 
 import javax.annotation.concurrent.ThreadSafe;
 
-
 /**
  * Id Segment.
+ *
+ * <p><img src="../doc-files/SegmentId.png" alt="SegmentId"></p>
  *
  * @author ahoo wang
  */
 @ThreadSafe
-public interface IdSegment extends Comparable<IdSegment> {
-
+public interface IdSegment extends Comparable<IdSegment>, Grouped {
+    
     long SEQUENCE_OVERFLOW = -1;
-
+    
     long TIME_TO_LIVE_FOREVER = Long.MAX_VALUE;
-
+    
     /**
      * ID segment fetch time.
      * unit {@link java.util.concurrent.TimeUnit#SECONDS}
@@ -37,15 +39,15 @@ public interface IdSegment extends Comparable<IdSegment> {
      * @return fetch time
      */
     long getFetchTime();
-
+    
     long getMaxId();
-
+    
     long getOffset();
-
+    
     long getSequence();
-
+    
     long getStep();
-
+    
     /**
      * the id segment time to live.
      * unit {@link java.util.concurrent.TimeUnit#SECONDS}
@@ -55,7 +57,7 @@ public interface IdSegment extends Comparable<IdSegment> {
     default long getTtl() {
         return TIME_TO_LIVE_FOREVER;
     }
-
+    
     /**
      * id segment has expired?.
      *
@@ -69,17 +71,18 @@ public interface IdSegment extends Comparable<IdSegment> {
              */
             return false;
         }
-        return Clock.CACHE.secondTime() - getFetchTime() > getTtl();
+        
+        return Clock.SYSTEM.secondTime() - getFetchTime() > getTtl();
     }
-
+    
     default boolean isOverflow() {
         return getSequence() >= getMaxId();
     }
-
+    
     default boolean isOverflow(long nextSeq) {
         return nextSeq == SEQUENCE_OVERFLOW || nextSeq > getMaxId();
     }
-
+    
     /**
      * not expired and not overflow.
      *
@@ -88,9 +91,9 @@ public interface IdSegment extends Comparable<IdSegment> {
     default boolean isAvailable() {
         return !isExpired() && !isOverflow();
     }
-
+    
     long incrementAndGet();
-
+    
     @Override
     default int compareTo(IdSegment other) {
         if (getOffset() == other.getOffset()) {
@@ -98,7 +101,7 @@ public interface IdSegment extends Comparable<IdSegment> {
         }
         return getOffset() > other.getOffset() ? 1 : -1;
     }
-
+    
     default void ensureNextIdSegment(IdSegment nextIdSegment) throws NextIdSegmentExpiredException {
         if (compareTo(nextIdSegment) >= 0) {
             throw new NextIdSegmentExpiredException(this, nextIdSegment);

@@ -52,7 +52,7 @@ public class DefaultCosIdScanner implements CosIdScanner {
     @Override
     public void scan() {
         if (log.isInfoEnabled()) {
-            log.info("scan - basePackages:{}.", Arrays.toString(basePackages));
+            log.info("Scan basePackages:{}.", Arrays.toString(basePackages));
         }
         try {
             ClassLoader classLoader = getClass().getClassLoader();
@@ -69,9 +69,7 @@ public class DefaultCosIdScanner implements CosIdScanner {
                     cosIdAccessorRegistry.register(clazz, cosIdAccessor);
                 }
             }
-        } catch (IOException e) {
-            throw new CosIdException(e.getMessage(), e);
-        } catch (ClassNotFoundException e) {
+        } catch (IOException | ClassNotFoundException e) {
             throw new CosIdException(e.getMessage(), e);
         }
     }

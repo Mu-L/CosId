@@ -13,7 +13,12 @@
 
 package me.ahoo.cosid.spring.redis;
 
-import me.ahoo.cosid.util.MockIdGenerator;
+import me.ahoo.cosid.segment.IdSegmentDistributor;
+import me.ahoo.cosid.segment.IdSegmentDistributorDefinition;
+import me.ahoo.cosid.segment.IdSegmentDistributorFactory;
+import me.ahoo.cosid.test.Assert;
+import me.ahoo.cosid.test.MockIdGenerator;
+import me.ahoo.cosid.test.segment.distributor.IdSegmentDistributorSpec;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -22,38 +27,53 @@ import org.springframework.data.redis.connection.RedisStandaloneConfiguration;
 import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactory;
 import org.springframework.data.redis.core.StringRedisTemplate;
 
-
 /**
  * @author ahoo wang
  */
-class SpringRedisIdSegmentDistributorTest {
+class SpringRedisIdSegmentDistributorTest extends IdSegmentDistributorSpec {
     StringRedisTemplate stringRedisTemplate;
-    SpringRedisIdSegmentDistributor springRedisIdSegmentDistributor;
-
+    SpringRedisIdSegmentDistributorFactory distributorFactory;
+    protected IdSegmentDistributorDefinition idSegmentDistributorDefinition;
+    
     @BeforeEach
-    private void initRedis() {
+    void setup() {
         RedisStandaloneConfiguration redisStandaloneConfiguration = new RedisStandaloneConfiguration();
         LettuceConnectionFactory lettuceConnectionFactory = new LettuceConnectionFactory(redisStandaloneConfiguration);
         lettuceConnectionFactory.afterPropertiesSet();
         stringRedisTemplate = new StringRedisTemplate(lettuceConnectionFactory);
-        springRedisIdSegmentDistributor = new SpringRedisIdSegmentDistributor("SpringRedisIdSegmentDistributorTest", MockIdGenerator.INSTANCE.generateAsString(), stringRedisTemplate);
-
+        distributorFactory = new SpringRedisIdSegmentDistributorFactory(stringRedisTemplate);
+        idSegmentDistributorDefinition = new IdSegmentDistributorDefinition("SpringRedisIdSegmentDistributorTest", MockIdGenerator.INSTANCE.generateAsString(), 0, 100);
     }
-
-    @Test
-    void nextMaxId() {
-        long nextMaxId = springRedisIdSegmentDistributor.nextMaxId();
-        Assertions.assertEquals(springRedisIdSegmentDistributor.getStep(), nextMaxId);
+    
+    
+    @Override
+    protected IdSegmentDistributorFactory getFactory() {
+        return distributorFactory;
     }
-
+    
+    @Override
+    protected <T extends IdSegmentDistributor> void setMaxIdBack(T distributor, long maxId) {
+        String adderKey = ((SpringRedisIdSegmentDistributor) distributor).getAdderKey();
+        stringRedisTemplate.opsForValue().set(adderKey, String.valueOf(maxId - 1));
+    }
+    
+    
     @Test
-    public void generateIfMaxIdBack() {
-        long id = springRedisIdSegmentDistributor.nextMaxId();
-        Assertions.assertTrue(id > 0);
-        String adderKey = springRedisIdSegmentDistributor.getAdderKey();
-        stringRedisTemplate.opsForValue().set(adderKey, String.valueOf(id - 1));
-        Assertions.assertThrows(IllegalStateException.class, () -> {
-            long id2 = springRedisIdSegmentDistributor.nextMaxId();
-        });
+    protected void distributorFactoryTest() {
+        IdSegmentDistributor idSegmentDistributor = distributorFactory.create(idSegmentDistributorDefinition);
+        Assertions.assertNotNull(idSegmentDistributor);
+    }
+    
+    @Test
+    void getAdderKey() {
+        IdSegmentDistributor idSegmentDistributor = distributorFactory.create(idSegmentDistributorDefinition);
+        Assertions.assertTrue(idSegmentDistributor instanceof SpringRedisIdSegmentDistributor);
+        SpringRedisIdSegmentDistributor springRedisIdSegmentDistributor = (SpringRedisIdSegmentDistributor) idSegmentDistributor;
+        Assertions.assertNotNull(springRedisIdSegmentDistributor.getAdderKey());
+        Assertions.assertNotNull(springRedisIdSegmentDistributor.getName());
+        Assertions.assertTrue(springRedisIdSegmentDistributor.getOffset() == 0);
+        Assertions.assertTrue(springRedisIdSegmentDistributor.getStep() == 100);
+        Assertions.assertNotNull(springRedisIdSegmentDistributor.getNamespace());
+        Assertions.assertNotNull(springRedisIdSegmentDistributor.nextMaxId(100));
     }
 }

@@ -12,15 +12,18 @@
  */
 
 dependencies {
-    api(platform("org.springframework.boot:spring-boot-dependencies:${rootProject.ext.get("springBootVersion")}"))
-    api(platform("org.springframework.cloud:spring-cloud-dependencies:${rootProject.ext.get("springCloudVersion")}"))
-    api(platform("me.ahoo.cosky:cosky-bom:${rootProject.ext.get("coskyVersion")}"))
+    api(platform(libs.spring.boot.dependencies))
+    api(platform(libs.spring.cloud.dependencies))
+    api(platform(libs.okhttp.bom))
+    api(platform(libs.testcontainers.bom))
     constraints {
-        api("org.projectlombok:lombok:${rootProject.ext.get("lombokVersion")}")
-        api("org.mybatis:mybatis:${rootProject.ext.get("mybatisVersion")}")
-        api("org.mybatis.spring.boot:mybatis-spring-boot-starter:${rootProject.ext.get("mybatisBootVersion")}")
-        api("com.google.guava:guava:${rootProject.ext.get("guavaVersion")}")
-        api("org.junit-pioneer:junit-pioneer:${rootProject.ext.get("junitPioneerVersion")}")
-        api("io.springfox:springfox-boot-starter:${rootProject.ext.get("springfoxVersion")}")
+        api(libs.guava)
+        api(libs.mybatis)
+        api(libs.mybatis.spring.boot.starter)
+        api(libs.springdoc.openapi.starter.webflux.ui)
+        api(libs.junit.pioneer)
+        api(libs.hamcrest)
+        api(libs.jmhCore)
+        api(libs.jmh.generator.annprocess)
     }
 }

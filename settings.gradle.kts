@@ -17,22 +17,31 @@ include(":cosid-bom")
 include(":cosid-dependencies")
 include(":cosid-core")
 include(":cosid-spring-boot-starter")
-include(":cosid-redis")
 include(":cosid-spring-redis")
 include(":cosid-jdbc")
 include(":cosid-mybatis")
-include(":cosid-example")
 include(":cosid-jackson")
-include(":cosid-shardingsphere")
 include(":cosid-zookeeper")
+include(":cosid-test")
+include(":cosid-proxy")
+include(":cosid-proxy-server")
+include(":cosid-axon")
+include(":cosid-flowable")
+include(":cosid-activiti")
+include(":cosid-mongo")
+include(":cosid-spring-data-jdbc")
+include(":cosid-mod-test")
+include(":code-coverage-report")
 
-buildscript{
-    repositories{
-        gradlePluginPortal()
-    }
-    dependencies{
-        classpath("me.champeau.jmh:jmh-gradle-plugin:0.6.6")
-        classpath("io.github.gradle-nexus:publish-plugin:1.1.0")
-        classpath("com.github.spotbugs.snom:spotbugs-gradle-plugin:5.0.4")
-    }
-}
+include("cosid-example-proxy")
+project(":cosid-example-proxy").projectDir = file("examples/cosid-example-proxy")
+
+include("cosid-example-redis")
+project(":cosid-example-redis").projectDir = file("examples/cosid-example-redis")
+
+include("cosid-example-redis-cosid")
+project(":cosid-example-redis-cosid").projectDir = file("examples/cosid-example-redis-cosid")
+
+include("cosid-example-zookeeper")
+project(":cosid-example-zookeeper").projectDir = file("examples/cosid-example-zookeeper")
+

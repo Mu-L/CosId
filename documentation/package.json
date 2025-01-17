@@ -1,0 +1,22 @@
+{
+  "name": "CosId",
+  "version": "1.0.0",
+  "description": "通用、灵活、高性能的分布式ID生成器",
+  "main": "index.js",
+  "repository": "https://github.com/Ahoo-Wang/CosId",
+  "scripts": {
+    "docs:dev": "vitepress dev docs",
+    "docs:build": "vitepress build docs",
+    "docs:preview": "vitepress preview docs"
+  },
+  "author": "ahoo wang",
+  "license": "Apache 2.0",
+  "devDependencies": {
+    "mermaid": "^11.4.1",
+    "vitepress": "^1.5.0",
+    "vitepress-plugin-mermaid": "^2.0.17"
+  },
+  "dependencies": {
+    "medium-zoom": "^1.1.0"
+  }
+}
